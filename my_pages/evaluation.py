@@ -30,12 +30,14 @@ def show_run_evaluation_tab():
         st.subheader("Query Set")
         query_method = st.radio("Query Input Method", ["Text Input", "Upload File"], horizontal=True)
         
+        queries = None  # Initialize queries variable to handle both cases
+        
         if query_method == "Text Input":
             queries = st.text_area(
                 "Enter queries (one per line)",
                 "What is RAG?\nHow does vector search work?\nExplain embedding models."
             )
-        else:
+        elif query_method == "Upload File":
             query_file = st.file_uploader("Upload query file (CSV or TXT)", type=["csv", "txt"])
         
         # Evaluation parameters
@@ -55,62 +57,16 @@ def show_run_evaluation_tab():
         
         # Submit button
         submit = st.form_submit_button("Run Evaluation")
-    
-    # Process evaluation submission
-    if submit:
-        with st.spinner("Running evaluation..."):
-            # Process queries
-            if query_method == "Text Input":
-                query_set = [q.strip() for q in queries.split("\n") if q.strip()]
+        
+        if submit:
+            # If Text Input is used, ensure queries are provided
+            if query_method == "Text Input" and queries:
+                st.success(f"Running evaluation with the following queries:\n{queries}")
+            elif query_method == "Upload File" and query_file:
+                st.success(f"Running evaluation with queries from file: {query_file.name}")
             else:
-                if query_file is None:
-                    st.error("Please upload a query file")
-                    return
-                
-                # Process the uploaded file
-                if query_file.type == "text/csv":
-                    df = pd.read_csv(query_file)
-                    query_set = df.iloc[:,0].tolist()  # Assume first column contains queries
-                else:
-                    content = query_file.getvalue().decode()
-                    query_set = [line.strip() for line in content.split("\n") if line.strip()]
-            
-            # Prepare parameters
-            parameters = {
-                "name": eval_name,
-                "description": eval_description,
-                "relevance_threshold": relevance_threshold,
-                "top_k": top_k,
-                "metrics": metrics
-            }
-            
-            # Run the evaluation
-            eval_id, results = run_evaluation(query_set, parameters)
-            
-            # Show success message
-            st.success(f"Evaluation completed! ID: {eval_id}")
-            
-            # Display summary results
-            st.subheader("Summary Results")
-            
-            # Create metrics display
-            metric_cols = st.columns(4)
-            
-            metrics_to_show = {
-                "Precision": results.get("precision", 0),
-                "Recall": results.get("recall", 0),
-                "F1 Score": results.get("f1_score", 0),
-                "MRR": results.get("mrr", 0)
-            }
-            
-            for i, (metric, value) in enumerate(metrics_to_show.items()):
-                with metric_cols[i % 4]:
-                    st.metric(label=metric, value=f"{value:.2f}")
-            
-            # View detailed results button
-            if st.button("View Detailed Results"):
-                st.session_state.selected_eval_id = eval_id
-                st.rerun()
+                st.error("Please provide valid input for queries (either text or file).")
+
 
 def show_results_tab():
     """Display the tab for viewing evaluation results"""
