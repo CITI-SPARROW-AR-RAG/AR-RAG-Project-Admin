@@ -114,7 +114,7 @@ def show_run_evaluation_tab():
             if st.button("View Detailed Results"):
                 st.session_state.selected_eval_id = eval_id
                 st.session_state.selected_eval_results = results
-                st.experimental_rerun()
+                st.rerun()
 
 
 def show_results_tab():

@@ -32,7 +32,7 @@ def logout():
     st.session_state.logged_in = False
     st.session_state.username = None
     st.session_state.active_page = 'login'
-    st.experimental_rerun()  # Ensures the app reruns after logout
+    st.rerun()
 
 def main():
     # Initialize session state
@@ -45,12 +45,6 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded"
     )
-    
-    # Debugging info for session state tracking
-    st.write(f"🔍 Debug: Logged in - {st.session_state.logged_in}, Active Page - {st.session_state.active_page}")
-
-    # Header
-    st.markdown("# Admin Interface")
     
     # Authentication check
     if not st.session_state.logged_in:
@@ -78,8 +72,10 @@ def main():
             index=pages.index(st.session_state.active_page)
         )
 
-        # Update session state to remember active page
-        st.session_state.active_page = selected_page
+        # If the selected page is different, update and rerun
+        if selected_page != st.session_state.active_page:
+            st.session_state.active_page = selected_page
+            st.rerun()  # Force immediate rerun
 
         # Logout button
         if st.sidebar.button("Logout"):
