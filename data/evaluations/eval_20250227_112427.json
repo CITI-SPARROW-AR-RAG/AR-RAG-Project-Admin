@@ -1,0 +1,45 @@
+{
+    "name": "Evaluation_20250227_1124",
+    "description": "RAG system evaluation",
+    "parameters": {
+        "name": "Evaluation_20250227_1124",
+        "description": "RAG system evaluation",
+        "relevance_threshold": 0.7,
+        "top_k": 5,
+        "metrics": [
+            "Precision",
+            "Recall",
+            "F1",
+            "MRR"
+        ]
+    },
+    "precision": 0.85,
+    "recall": 0.78,
+    "f1_score": 0.81,
+    "mrr": 0.92,
+    "ndcg": 0.88,
+    "queries": [
+        {
+            "query": "What is RAG?",
+            "expected": "Expected result",
+            "actual": "Actual result",
+            "score": 0.9,
+            "latency_ms": 150
+        },
+        {
+            "query": "How does vector search work?",
+            "expected": "Expected result",
+            "actual": "Actual result",
+            "score": 0.9,
+            "latency_ms": 150
+        },
+        {
+            "query": "Explain embedding models.",
+            "expected": "Expected result",
+            "actual": "Actual result",
+            "score": 0.9,
+            "latency_ms": 150
+        }
+    ],
+    "timestamp": "2025-02-27 11:24:27.406160"
+}
