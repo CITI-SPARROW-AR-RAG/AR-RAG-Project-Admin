@@ -2,10 +2,13 @@ import json
 import os
 import datetime
 from pathlib import Path
+import pandas as pd
+from datetime import datetime
 
 # Define constants
 EVALUATIONS_DIR = Path(__file__).parent.parent / "data" / "evaluations"
 EVAL_INDEX = Path(__file__).parent.parent / "data" / "evaluation_index.json"
+TESTSET_DIR = Path(__file__).parent.parent / "data" / "testset_generation"
 
 # Ensure directories exist
 os.makedirs(EVALUATIONS_DIR, exist_ok=True)
@@ -135,3 +138,18 @@ def run_evaluation(query_set, parameters):
     eval_id = save_evaluation_result(results)
     
     return eval_id, results
+
+def create_testset_using_ragas(num_of_test):
+    dummy_data = {
+        'index': [i for i in range(0,10)],
+        'question': [i for i in range(0,10)],
+        'reference': [i for i in range(0,10)],
+        'retrieved_context': [i for i in range(0,10)],
+    }
+    testset_df = pd.DataFrame(dummy_data)
+
+    file_name = datetime.now().strftime("testset_%Y%m%d_%H%M%S.csv")
+    testset_df.to_csv(os.path.join(TESTSET_DIR, file_name), index=False)
+
+    return True, "Testset data created successfully", testset_df
+
