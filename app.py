@@ -11,12 +11,12 @@ from utils.auth import check_login, hash_password
 from utils.file_manager import list_files
 
 # Import all pages at the top to avoid conditional imports
+from my_pages.signup import show_signup_page
+from my_pages.login import show_login_page
 from my_pages.upload import show_upload_page
 from my_pages.files_dashboard import show_files_dashboard
-from my_pages.signup import show_signup_page
 from my_pages.evaluation import show_evaluation_page
 from my_pages.change_password import show_change_password_page
-from my_pages.login import show_login_page
 
 # Configuration and session state initialization
 def init_session_state():
@@ -58,7 +58,7 @@ def main():
         st.subheader("Navigation")
 
         # List of pages
-        pages = ["Upload Files", "Files Dashboard", "Create Admin User", "RAG Evaluation", "Change Password"]
+        pages = ["Upload Files", "Files Dashboard", "RAG Evaluation", "Create Admin User", "Change Password"]
 
         # Validate active_page
         if "active_page" not in st.session_state or st.session_state.active_page not in pages:
@@ -86,10 +86,10 @@ def main():
         show_upload_page()
     elif st.session_state.active_page == "Files Dashboard":
         show_files_dashboard()
-    elif st.session_state.active_page == "Create Admin User":
-        show_signup_page()
     elif st.session_state.active_page == "RAG Evaluation":
         show_evaluation_page()
+    elif st.session_state.active_page == "Create Admin User":
+        show_signup_page()
     elif st.session_state.active_page == "Change Password":
         show_change_password_page()
 
