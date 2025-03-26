@@ -22,12 +22,12 @@ def show_upload_page():
                 # Process and save the file
                 file_id, file_info = save_uploaded_file(uploaded_file, include_in_vector_db)
                 
-                # If file should be included in vector DB, add it
-                if include_in_vector_db:
-                    from utils.vector_db import add_file_to_vector_db
-                    success, message = add_file_to_vector_db(file_id, file_info)
-                    if not success:
-                        st.warning(f"File uploaded but not added to vector DB: {message}")
+                # # If file should be included in vector DB, add it
+                # if include_in_vector_db:
+                #     from utils.vector_db import add_file_to_vector_db
+                #     success, message = add_file_to_vector_db(file_id, file_info)
+                #     if not success:
+                #         st.warning(f"File uploaded but not added to vector DB: {message}")
                 
                 # Show success message
                 st.success(f"File '{uploaded_file.name}' uploaded successfully!")

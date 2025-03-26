@@ -98,19 +98,19 @@ def show_files_dashboard():
                 st.error("File could not be downloaded")
     
     with col2:
-        # Delete button
         if st.button("Delete File"):
             if st.session_state.get("confirm_delete") != selected_file_id:
                 st.session_state.confirm_delete = selected_file_id
                 st.warning(f"Are you sure you want to delete '{selected_file_info['original_filename']}'? Click Delete again to confirm.")
             else:
-                success, message = delete_file(selected_file_id)
-                if success:
-                    st.success(message)
+                response = delete_file(selected_file_id)  # Perbaikan pemanggilan API
+                if response["status"]:
+                    st.success(response["message"])
                     st.session_state.confirm_delete = None
                     st.rerun()
                 else:
-                    st.error(message)
+                    st.error(response["message"])
+
     
     with col3:
         # Vector DB toggle
