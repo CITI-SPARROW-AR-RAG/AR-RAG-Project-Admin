@@ -1,8 +1,7 @@
 import streamlit as st
-from utils.auth import check_login, hash_password
 import json
 from pathlib import Path
-import os
+import os, requests
 
 # Define the path to the users file
 USERS_FILE = Path(__file__).parent.parent / "data" / "users.json"
@@ -13,15 +12,11 @@ def show_change_password_page():
     
     # Get the logged-in username
     username = st.session_state.username
-
-    # Ensure the users file exists
-    if not os.path.exists(USERS_FILE):
-        st.error("No users file found!")
-        return
     
     # Load users from the file
-    with open(USERS_FILE, 'r') as f:
-        users = json.load(f)
+    API_URL = "http://127.0.0.1:8000/admin/get_users"
+    response = requests.get(API_URL)
+    users = response.json()
     
     if username not in users:
         st.error("User does not exist!")
@@ -40,24 +35,14 @@ def show_change_password_page():
             st.error("New password and confirmation do not match.")
             return
         
-        # Verify old password
-        stored_hash = users[username]["password_hash"]
-        salt = users[username]["salt"]
-        old_hash, _ = hash_password(old_password, salt)
+        API_URL = "http://127.0.0.1:8000/admin/verify_password"
+        flag = requests.get(API_URL, params={"username": username, "pass_input": old_password})
 
-        if old_hash != stored_hash:
+        if flag==False:
             st.error("Old password is incorrect.")
             return
         
-        # Hash the new password
-        new_hash, new_salt = hash_password(new_password)
+        API_URL = "http://127.0.0.1:8000/admin/change_password"
+        flag = requests.get(API_URL, params={"username": username, "pass_input": new_password})
 
-        # Update the user's password
-        users[username]["password_hash"] = new_hash
-        users[username]["salt"] = new_salt
-
-        # Save the updated users file
-        with open(USERS_FILE, 'w') as f:
-            json.dump(users, f, indent=4)
-        
         st.success("Password updated successfully!")

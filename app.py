@@ -7,7 +7,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent / "my_pages"))
 
 # Import utility modules
-from utils.auth import check_login, hash_password
 from utils.file_manager import list_files
 
 # Import all pages at the top to avoid conditional imports
