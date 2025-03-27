@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.file_manager import list_files, delete_file, update_vector_db_status, download_file
-from utils.vector_db import add_file_to_vector_db, remove_file_from_vector_db
+from utils.file_manager import list_files, delete_file, download_file, add_file_to_vector_db, remove_file_from_vector_db
 
 def show_files_dashboard():
     """Display the files dashboard"""
@@ -103,8 +102,10 @@ def show_files_dashboard():
                 st.session_state.confirm_delete = selected_file_id
                 st.warning(f"Are you sure you want to delete '{selected_file_info['original_filename']}'? Click Delete again to confirm.")
             else:
-                response = delete_file(selected_file_id)  # Perbaikan pemanggilan API
-                if response["status"]:
+                response = delete_file(selected_file_id) 
+                result = remove_file_from_vector_db(selected_file_id)
+
+                if response["status"] and result['status']:
                     st.success(response["message"])
                     st.session_state.confirm_delete = None
                     st.rerun()
@@ -113,24 +114,25 @@ def show_files_dashboard():
 
     
     with col3:
-        # Vector DB toggle
-        current_status = selected_file_info["in_vector_db"]
+        current_status = selected_file_info.get("in_vector_db", False)
         new_status = not current_status
         action = "Add to" if new_status else "Remove from"
-        
+
         if st.button(f"{action} Vector DB"):
-            if new_status:
-                success, message = add_file_to_vector_db(selected_file_id, selected_file_info)
-            else:
-                success, message = remove_file_from_vector_db(selected_file_id, selected_file_info)
-            
-            if success:
-                # Update the status in file metadata
-                update_success, update_message = update_vector_db_status(selected_file_id, new_status)
-                if update_success:
-                    st.success(f"File {action.lower()}d vector database successfully")
-                    st.rerun()
-                else:
-                    st.error(update_message)
-            else:
-                st.error(message)
+            with st.spinner(f"{action} Vector DB... Please wait."):
+                try:
+                    if new_status:
+                        # Add file to vector database
+                        result = add_file_to_vector_db(selected_file_id, selected_file_info)
+                    else:
+                        # Remove file from vector database
+                        result = remove_file_from_vector_db(selected_file_id)
+
+                    if result['status']:
+                        st.success(result['message'])
+                        st.rerun()
+                    else:
+                        st.error(result['message'])
+
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")

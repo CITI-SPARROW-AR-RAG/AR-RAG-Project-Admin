@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.file_manager import save_uploaded_file
+from utils.file_manager import save_uploaded_file, add_file_to_vector_db
 
 def show_upload_page():
     """Display the file upload page"""
@@ -22,12 +22,14 @@ def show_upload_page():
                 # Process and save the file
                 file_id, file_info = save_uploaded_file(uploaded_file, include_in_vector_db)
                 
-                # # If file should be included in vector DB, add it
-                # if include_in_vector_db:
-                #     from utils.vector_db import add_file_to_vector_db
-                #     success, message = add_file_to_vector_db(file_id, file_info)
-                #     if not success:
-                #         st.warning(f"File uploaded but not added to vector DB: {message}")
+                # If file should be included in vector DB, add it
+                if include_in_vector_db:
+                    result = add_file_to_vector_db(file_id, file_info)
+
+                    if result['status']:
+                        st.success(result['message'])
+                    else:
+                        st.error(result['message'])
                 
                 # Show success message
                 st.success(f"File '{uploaded_file.name}' uploaded successfully!")

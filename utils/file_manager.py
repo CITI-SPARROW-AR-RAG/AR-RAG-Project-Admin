@@ -60,23 +60,29 @@ def download_file(file_id):
 
     return file_data, file_name 
 
-def update_vector_db_status(file_id, in_vector_db):
-    """Update whether a file is included in the vector database"""
-    if not os.path.exists(FILES_INDEX):
-        return False, "Files index not found"
+def add_file_to_vector_db(file_id, file_metadata):
+    API_URL = "http://127.0.0.1:8000/admin/add_file_to_vdb"
     
-    with open(FILES_INDEX, 'r') as f:
-        files_index = json.load(f)
+    # Convert file_metadata to JSON string
+    payload = {
+        "file_id": file_id,
+        "file_metadata": json.dumps(file_metadata)
+    }
     
-    if file_id not in files_index:
-        return False, "File not found"
+    # Send request to FastAPI server using form data
+    response = requests.post(API_URL, data=payload)
     
-    # Update status
-    files_index[file_id]["in_vector_db"] = in_vector_db
-    
-    # Save changes
-    with open(FILES_INDEX, 'w') as f:
-        json.dump(files_index, f, indent=4)
-    
-    return True, f"File vector DB status updated to: {in_vector_db}"
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {"status": False, "message": f"Error: {response.status_code}"}
 
+def remove_file_from_vector_db(file_id):
+    API_URL = "http://127.0.0.1:8000/admin/remove_file_from_vdb"
+
+    response = requests.post(API_URL, data={"file_id": file_id})
+
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {"status": False, "message": f"Error: {response.status_code} - {response.text}"}
