@@ -6,6 +6,9 @@ import numpy as np
 import glob, os
 from datetime import datetime
 from utils.rag_evaluator import run_evaluation, list_evaluations, get_evaluation_details, delete_evaluation, create_testset_using_ragas
+from utils.rag_evaluator import get_queries_response, fetch_testset_files
+import requests
+
 
 TESTSET_DIR = Path(__file__).parent.parent / "data" / "testset_generation"
 
@@ -47,18 +50,16 @@ def show_run_evaluation_tab():
 
             with st.spinner("Fetching responses..."):
                 query_list = [q.strip() for q in queries.split("\n") if q.strip()]
-                # results = run_query(query_list)  # Assume this function exists
-
-                results = {
-                    "What is RAG?": "RAG (Retrieval-Augmented Generation) is an AI technique that enhances LLMs by retrieving relevant documents before generating responses.",
-                    "How does vector search work?": "Vector search finds the most relevant items by comparing vector representations in a high-dimensional space using similarity metrics like cosine similarity.",
-                    "Explain embedding models.": "Embedding models convert text into numerical vectors that capture semantic meaning, enabling tasks like search, recommendation, and NLP applications."
-                }
+                results = get_queries_response(query_list)
 
             st.subheader("Query Results")
-            for query, response in results.items():
-                with st.expander(f"Query: {query}"):
-                    st.write(response)
+            for res in results:
+                with st.expander(f"Query: {res['question']}"):
+                    st.write("**Answer**")
+                    st.write(res.get("answer", "No answer available"))
+
+                    st.write("**Sources**")
+                    st.write(res.get("sources", "No sources found"))
 
     elif query_method == "Upload File":
         st.subheader("Upload Query File")
@@ -262,55 +263,60 @@ def show_results_tab():
         st.error("Could not load evaluation details.")
 
 def show_testset_history():
-    testset_files = glob.glob(os.path.join(TESTSET_DIR, "testset_*.csv"))
+    DOWNLOAD_URL = "http://localhost:8000/download?file="
 
-    if not testset_files:
-        st.warning("No testset files found")
+    """Display testset file history in Streamlit with download buttons"""
+    response = fetch_testset_files()
+
+    if not response["success"]:
+        st.warning(response["message"])
         return
 
-    # Extract filename & datetime, then sort by newest first
-    file_data = []
-    for testset_file in testset_files:
-        filename = os.path.basename(testset_file)
-        datetime_str = filename[8:-4]
-        dt = datetime.strptime(datetime_str, "%Y%m%d_%H%M%S")
-        file_data.append((dt, filename, testset_file))
+    file_data = response["files"]
 
-    # Sort files by datetime (newest first)
-    file_data.sort(reverse=True, key=lambda x: x[0])
-
-    # Display sorted files
     st.subheader("Testset Files History")
 
-    for dt, filename, testset_file in file_data:
-        with open(testset_file, "rb") as f:
-            file_bytes = f.read()
+    for file in file_data:
+        filename = file["filename"]
+        dt_str = file["datetime"]
 
-        # Display filename, date, and download button
         col1, col2, col3 = st.columns([4, 2, 1])
         col1.text(filename)
-        col2.text(dt.strftime("%Y-%m-%d %H:%M:%S"))  # Format date
-        col3.download_button(
-            label="Download",
-            data=file_bytes,
-            file_name=filename,
-            mime="text/csv"
-        )
+        col2.text(dt_str)
 
+        # Create a direct download link instead of a new button
+        col3.markdown(
+            f'<a href="{DOWNLOAD_URL}{filename}" download="{filename}" target="_blank">'
+            f'<button style="padding: 5px 10px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer;">Download</button>'
+            f'</a>',
+            unsafe_allow_html=True
+        )
 def show_create_testset_tab():
     st.header("Testset Generation")
 
     with st.form(key="create testset"):
-        num_of_test = st.number_input("Enter desired number of testset data")
+        num_of_test = st.number_input(
+            "Enter desired number of testset data",
+            min_value=1,  # Minimum value allowed
+            step=1,        # Increment step
+            format="%d"    # Display as an integer
+        )
         submit_button = st.form_submit_button(label="Create Now")
 
     if submit_button:
-        success, message, testset_df = create_testset_using_ragas(num_of_test=num_of_test)
-        if success:
-            st.success(message)
+        response = create_testset_using_ragas(num_of_test=num_of_test)
+
+        if response["status"]:  # Check if the request was successful
+            st.success(response["message"])
+
+            # Extract only the generated testset and convert it into a DataFrame
+            testset_data = response["data"]  # Extract JSON data
+            testset_df = pd.DataFrame(testset_data)  # Convert JSON to DataFrame
+
+            # Display the DataFrame in Streamlit
             st.dataframe(testset_df)
         else:
-            st.error(message)
+            st.error(response["message"])
 
     show_testset_history()
     

@@ -36,13 +36,14 @@ def show_change_password_page():
             return
         
         API_URL = "http://127.0.0.1:8000/admin/verify_password"
-        flag = requests.get(API_URL, params={"username": username, "pass_input": old_password})
+        response = requests.get(API_URL, params={"username": username, "pass_input": old_password})
+        response = response.json()
 
-        if flag==False:
+        if not response['verified']:
             st.error("Old password is incorrect.")
             return
         
         API_URL = "http://127.0.0.1:8000/admin/change_password"
-        flag = requests.get(API_URL, params={"username": username, "pass_input": new_password})
+        flag = requests.put(API_URL, params={"username": username, "new_password": new_password})
 
         st.success("Password updated successfully!")

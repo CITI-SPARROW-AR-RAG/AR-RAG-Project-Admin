@@ -18,8 +18,8 @@ def show_signup_page():
             elif new_password != confirm_password:
                 st.error("Passwords do not match")
             else:
-                success, message = create_user(new_username, new_password, st.session_state.username)
-                if success:
+                success_status, message = create_user(new_username, new_password, st.session_state.username)
+                if success_status:
                     st.success(message)
                 else:
                     st.error(message)

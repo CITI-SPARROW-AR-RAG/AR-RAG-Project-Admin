@@ -4,6 +4,7 @@ import datetime
 from pathlib import Path
 import pandas as pd
 from datetime import datetime
+import requests
 
 # Define constants
 EVALUATIONS_DIR = Path(__file__).parent.parent / "data" / "evaluations"
@@ -12,6 +13,13 @@ TESTSET_DIR = Path(__file__).parent.parent / "data" / "testset_generation"
 
 # Ensure directories exist
 os.makedirs(EVALUATIONS_DIR, exist_ok=True)
+
+def get_queries_response(queries):
+    API_URL = "http://localhost:8000/admin/get_queries_response"
+    response = requests.post(API_URL, json={"queries": queries})  # Kirim data dalam format JSON
+
+    if response.status_code == 200:
+        return response.json()["responses"]
 
 def save_evaluation_result(evaluation_data):
     """Save a RAG evaluation result"""
@@ -140,16 +148,26 @@ def run_evaluation(query_set, parameters):
     return eval_id, results
 
 def create_testset_using_ragas(num_of_test):
-    dummy_data = {
-        'index': [i for i in range(0,10)],
-        'question': [i for i in range(0,10)],
-        'reference': [i for i in range(0,10)],
-        'retrieved_context': [i for i in range(0,10)],
-    }
-    testset_df = pd.DataFrame(dummy_data)
+    API_URL = "http://localhost:8000/admin/create_testset_using_ragas"
+    payload = {"num_of_test": num_of_test}
+    response = requests.post(API_URL, json=payload)
 
-    file_name = datetime.now().strftime("testset_%Y%m%d_%H%M%S.csv")
-    testset_df.to_csv(os.path.join(TESTSET_DIR, file_name), index=False)
+    # Check response
+    if response.status_code == 200:
+        data = response.json()
+        return {"status": True, "message": "Testset created successfully", "data": data['data']}
+    else:
+        return {"status": False, "message": "Testset generation failed",  "data": []}
 
-    return True, "Testset data created successfully", testset_df
+
+def fetch_testset_files():
+    API_BASE_URL = "http://localhost:8000/admin"
+
+    """Fetch testset file history from the FastAPI server"""
+    response = requests.get(f"{API_BASE_URL}/testset_files")
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {"success": False, "files": []}
+
 
